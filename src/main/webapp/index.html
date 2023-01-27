@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="ISO-8859-1">
+	<title>First Web Application</title>  
+</head>  
+<style>  
+	ul {  
+		list-style-type: none;  
+		margin: 0;  
+		padding: 0;  
+	}  
+	body {  
+		background-color: #E6E6FA;  
+	}  
+</style>  
+<body>  
+	<h1>Welcome</h1>  
+	<script>
+		function addFeature(){
+			var nam = document.getElementById('name').value;
+			var ajaxRequest = new XMLHttpRequest();
+			ajaxRequest.onreadystatechange = function(){
+				if(ajaxRequest.readyState == 4){
+					document.getElementById('check').value = ajaxRequest.status;
+					if(ajaxRequest.status == 200){
+						var response = JSON.parse(ajaxRequest.responseText);
+						document.getElementById('request').value = response.request;
+						document.getElementById('nameRet').value = response.name;
+						document.getElementById('check').value = "ok";
+					}
+				}			
+			}
+			// ajaxRequest.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); 
+			//ajaxRequest.setRequestHeader('Access-Control-Allow-Origin', '*');
+			ajaxRequest.open('GET', 'http://localhost:8080/MddFrontend/addFeat/' + nam);
+			ajaxRequest.send();
+		}
+		function calculateMDD(){
+			var ajaxRequest = new XMLHttpRequest();
+			ajaxRequest.onreadystatechange = function(){
+				if(ajaxRequest.readyState == 4){
+					if(ajaxRequest.status == 200){
+						var response = JSON.parse(ajaxRequest.responseText);
+					}
+				}			
+			}
+			ajaxRequest.open('POST', 'http://localhost:8080/MddFrontend/calcMdd/',true);
+			ajaxRequest.send();
+		}
+
+		function calculateVC(){
+
+			var nam = document.getElementById('name').value;
+			var ajaxRequest = new XMLHttpRequest();
+			ajaxRequest.onreadystatechange = function(){
+				if(ajaxRequest.readyState == 4){
+					if(ajaxRequest.status == 200){
+						var response = JSON.parse(ajaxRequest.responseText);
+						document.getElementById('request').value = response.request;
+						document.getElementById('validConf').value = response.validConfigs;
+						document.getElementById('check').value = "ok";
+					}
+				}			
+			}
+			// ajaxRequest.setRequestHeader('X-Requested-With', 'XMLHttpRequest'); 
+			//ajaxRequest.setRequestHeader('Access-Control-Allow-Origin', '*');
+			ajaxRequest.open('GET', 'http://localhost:8080/MddFrontend/calcVc/');
+			ajaxRequest.send();
+		}
+	</script>
+	<input type="text" value="Gamer" id="name">
+	<button onclick="addFeature()" type="button" id="but">Get</button> 
+	<br>
+	<br>
+	Request:
+	<input type="text" id="request">
+	<br>
+	Name:
+	<input type="text" id="nameRet">
+	<br>
+	Check:
+	<input type="text" id="check">
+	<br>
+	<br>
+	
+	<form>
+		<label for="myfile">Select a file:</label>
+		<input type="file" id="myfile" name="myfile"> 
+		<button onclick="sendFM()" type="button" id="butSend">Send</button> 
+	</form>
+	<script>
+		var files;
+		var fr;
+		var parser = new DOMParser();
+		var xmlDoc;
+
+		document.getElementById('myfile').addEventListener('change', function() {
+	        
+			files = this.files[0];
+	        fr=new FileReader();
+	        fr.onload=function(){
+	            xmlDoc = parser.parseFromString(fr.result, "text/xml"); 
+	        }
+	        
+	        fr.readAsText(this.files[0]);
+	    })
+		
+		function sendFM(){
+			var file = files;
+			
+			var ajaxRequest = new XMLHttpRequest();
+			ajaxRequest.onreadystatechange = function(e) {
+	            if ( 4 == this.readyState ) {
+	                console.log(['xhr upload complete', e]);
+	            }
+	        };
+	        
+			ajaxRequest.open('POST', 'http://localhost:8080/MddFrontend/sendFM/',true);
+	        ajaxRequest.setRequestHeader("Cache-Control", "no-cache");
+	        ajaxRequest.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+			ajaxRequest.setRequestHeader("Content-Type","application/xml");
+			ajaxRequest.send(xmlDoc);
+	       
+		}
+		
+
+		function addConstr(){
+			var xmlString = document.getElementById('constraint').value;
+			xmlDoc = parser.parseFromString(xmlString, "text/xml");
+			var ajaxRequest = new XMLHttpRequest();
+			ajaxRequest.onreadystatechange = function(e) {
+	            if ( 4 == this.readyState ) {
+	                console.log(['xml sent', e]);
+	            }
+	        };
+	        
+			ajaxRequest.open('POST', 'http://localhost:8080/MddFrontend/newConstr/',true);
+	        ajaxRequest.setRequestHeader("Cache-Control", "no-cache");
+	        ajaxRequest.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+			ajaxRequest.setRequestHeader("Content-Type","application/xml");
+			ajaxRequest.send(xmlDoc);
+	       
+		}
+		
+	</script>
+	<br>
+	<button onclick="calculateMDD()" type="button" id="but3">Calculate MDD</button> 
+	<br>
+	<button onclick="calculateVC()" type="button" id="but4">Get Valid Configs</button> 
+	<input type="text" id="validConf">
+	<br>
+	<br>
+	Constraint:
+	<input type="text" id="constraint">
+	<br>
+	<button onclick="addConstr()" type="button" id="but5">Add Constraint</button> 
+	
+	Output:
+	<p id="output">
+</body>  
+</html>  
