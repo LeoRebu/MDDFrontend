@@ -40,38 +40,18 @@ import leo.TestMDD4.MDDConv;
 public class TServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private static final String ALLOWED_DOMAINS_REGEXP = ".*";
-	Document document = null;
 	
-
-	private MddInstance inst;
+	private Document document = null;
 	
-    /**
-     * Default constructor. 
-     * @throws IOException 
-     * @throws SAXException 
-     * @throws ParserConfigurationException 
-     * @throws InterruptedException 
-     */
-    public TServlet() {
-        // TODO Auto-generated constructor stub
-    	// super();
-    	
-    	
-   		// FMtoCTWtoMediciMDDGen(modelName);
-   		
-		/*
-		System.out.println("Before setNode (Base MDD: " + baseMDD + ")");  
-		searcher.setNode(baseMDD);
-		searcher.getPath();
-		nPaths = searcher.countPaths();
-   		System.out.print("After Constraints Paths #:\n " + nPaths + "\n\n");*/
-
-    }
-
+	private MddInstance instance;
+	
 	/**
+	 * Handler per le chiamate GET da parte dei client. Ritorna JSON contenente due campi: 
+	 * request, contenente la richiesta effettuata
+	 * value, contenente il valore richiesto dal client
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
-	
+    @SuppressWarnings("PMD.LocalVariableCouldBeFinal")
 	protected void doGet(
 			HttpServletRequest request, 
 			HttpServletResponse response) throws ServletException, IOException {
@@ -80,19 +60,43 @@ public class TServlet extends HttpServlet {
 		String requestUri = request.getRequestURI();
 		System.out.println(requestUri);
 		String json = "{}";
-		if (requestUri.equals("/MddFrontend/calcVc/")) {
-
-			System.out.println("just tell me i'm at least in here");
-			
-	    	int vc = inst.getValidConfigs();
+		switch(requestUri) {
+		case "/MddFrontend/calcVc/":
+	    	int vc = instance.getValidConfigs();
 			json = "{\n";
 			json += "\"request\": " + JSONObject.quote("calculateValidConfigs") + ",\n";
-			json += "\"validConfigs\": " + JSONObject.quote(String.valueOf(vc)) + "\n";
+			json += "\"value\": " + JSONObject.quote(String.valueOf(vc)) + "\n";
 			json += "}";
-	    	
-		}
-		if (requestUri.equals("/MddFrontend/addFeat/*")) {
-
+			break;
+		case "/MddFrontend/getFMFeatures/":
+	    	int featNum = instance.getFMInfo(2);
+			json = "{\n";
+			json += "\"request\": " + JSONObject.quote("calculateNumberOfFeatures") + ",\n";
+			json += "\"value\": " + JSONObject.quote(String.valueOf(featNum)) + "\n";
+			json += "}";
+			break;
+		case "/MddFrontend/getFMConstr/":
+	    	int constrNum = instance.getFMInfo(1) + instance.getFMInfo(3);
+			json = "{\n";
+			json += "\"request\": " + JSONObject.quote("calculateNumberOfConstraints") + ",\n";
+			json += "\"value\": " + JSONObject.quote(String.valueOf(constrNum)) + "\n";
+			json += "}";
+			break;
+		case "/MddFrontend/getNodeCount/":
+			int nc = instance.getNodeCount();
+			json = "{\n";
+			json += "\"request\": " + JSONObject.quote("getNodeCount") + ",\n";
+			json += "\"value\": " + JSONObject.quote(String.valueOf(nc)) + "\n";
+			json += "}";
+			break;
+		case "/MddFrontend/getVarCount/":
+			int vcount = instance.getMddVariableCount();
+			json = "{\n";
+			json += "\"request\": " + JSONObject.quote("getVarCount") + ",\n";
+			json += "\"value\": " + JSONObject.quote(String.valueOf(vcount)) + "\n";
+			json += "}";
+			break;
+		case "/MddFrontend/addFeat/":
 			String name = requestUri.substring("/MddFrontend/addFeat/".length());
 			if(name != null){
 				json = "{\n";
@@ -100,21 +104,15 @@ public class TServlet extends HttpServlet {
 				json += "\"name\": " + JSONObject.quote(name) + "\n";
 				json += "}";
 			}
+			break;
 		}
-		/*PrintWriter out = response.getWriter();
-		
-		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
-		out.print(json);
-		out.flush();*/
-		
 		
 		String origin = request.getHeader("Origin");
 		if (origin != null && origin.matches(ALLOWED_DOMAINS_REGEXP)) {
 			response.addHeader("Access-Control-Allow-Origin", origin);
 			response.setHeader("Allow", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
 			if (origin != null) {
-			    String headers = request.getHeader("Access-Control-Request-Headers");
+				String headers = request.getHeader("Access-Control-Request-Headers");
 			    String method = request.getHeader("Access-Control-Request-Method");
 			    response.addHeader("Access-Control-Allow-Methods", method);
 			    response.addHeader("Access-Control-Allow-Headers", headers);
@@ -122,9 +120,6 @@ public class TServlet extends HttpServlet {
 			}
 		}
 		
-		
-		
-	    
 	    response.setCharacterEncoding("UTF-8");
 		response.addHeader("Access-Control-Allow-Origin", "*");
 	    response.setStatus(200);
@@ -133,8 +128,10 @@ public class TServlet extends HttpServlet {
 	
 	
 	/**
+	 * Handler per le chiamate POST dai client
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
+	@SuppressWarnings("PMD.LocalVariableCouldBeFinal")
 	protected void doPost(
 			HttpServletRequest request, 
 			HttpServletResponse response) throws ServletException, IOException {
@@ -151,7 +148,7 @@ public class TServlet extends HttpServlet {
 		    }
 		    
 		    String payload = buffer.toString();
-		    System.out.println("");
+		    System.out.println("Payload: ");
 		    System.out.println(payload);
 		    
 			if (requestUri.equals("/MddFrontend/sendFM/")) {
@@ -167,6 +164,7 @@ public class TServlet extends HttpServlet {
 			    InputSource is = new InputSource(new StringReader(payload));
 			    try {
 					document = builder.parse(is);
+					instance = new MddInstance(document);
 				} catch (SAXException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -177,7 +175,7 @@ public class TServlet extends HttpServlet {
 			}
 			
 			if (requestUri.equals("/MddFrontend/calcMdd/")) {
-		    	inst = new MddInstance(document);
+		    	int ret = instance.calculateMDD();
 			}
 
 			if (requestUri.equals("/MddFrontend/newConstr/")) {
@@ -203,7 +201,7 @@ public class TServlet extends HttpServlet {
 					e.printStackTrace();
 				}
 			    Node constrNode = tempDoc.getElementsByTagName("constraints").item(0);
-		    	inst.addConstraint(constrNode);
+			    instance.addConstraint(constrNode);
 			}
 			
 		}

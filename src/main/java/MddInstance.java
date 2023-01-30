@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -20,7 +21,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import leo.TestMDD4.CTCManager;
 import leo.TestMDD4.MDDConv;
+import leo.TestMDD4.NodeManager;
 
 
 
@@ -31,26 +34,30 @@ import leo.TestMDD4.MDDConv;
  */
 public class MddInstance 
 {
-	public Node rootNode;
-	public Node constraintsNode;
-	public MDDConv conv;
-	public int baseMDD;
+	private Node rootNode;
+	private Node constraintsNode;
+	private MDDConv conv;
+	private int baseMDD;
 
 	
 	public MddInstance(Document document) {
    		System.out.println("Root element: "+ document.getDocumentElement().getNodeName());  
    		// Contains a single item node list for the struct node
    		NodeList nodeList = document.getElementsByTagName("struct");
-  			   		
+   		rootNode = nodeList.item(0).getChildNodes().item(1);
+
+   		constraintsNode = document.getElementsByTagName("constraints").item(0);
+	}
+	
+	public int calculateMDD() {
    		Vector<Node> root = new Vector<Node>();
-   		root.add(nodeList.item(0).getChildNodes().item(1));
-   		rootNode = root.get(0);
+   		root.add(rootNode);
 
    		conv = new MDDConv();
 		// Generates the variables for the MDD
 		conv.variablesGenerator(root); 
 		// Displays the variables currently generated
-		conv.displayVars();
+		conv.getManager();
 		// Generates the MDD with the inline constraints
 		try {
 			baseMDD = conv.getNode(root.get(0), 1);
@@ -59,9 +66,10 @@ public class MddInstance
 			e.printStackTrace();
 		}
 
-   		constraintsNode = document.getElementsByTagName("constraints").item(0);
 		
 		baseMDD = conv.applyCTConstraints(baseMDD, rootNode, constraintsNode);
+		
+		return baseMDD;
 	}
 	
 	public int getValidConfigs() {
@@ -69,6 +77,7 @@ public class MddInstance
 		PathSearcher searcher = new PathSearcher(manager, 1);
 		searcher.setNode(baseMDD);
 		searcher.getPath();
+		System.out.println("Number of paths: " + searcher.countPaths());
 		return searcher.countPaths();
 	}
 	
@@ -82,6 +91,58 @@ public class MddInstance
 		MDDVariable[] vars = manager.getAllVariables();
 		return vars.length;
 	}
+	
+	public int getFMInfo(int flag) {
+		int value = 0;
+		switch (flag) {
+		case (1): // Constraints
+			value = countFMElements(rootNode.getChildNodes(),flag) + 1;
+			break;
+		case(2): // Features
+			value = countFMElements(rootNode.getChildNodes(),flag);
+			break;
+		case(3): // Ctc
+			value = countFMElements(constraintsNode.getChildNodes(),flag);
+			break;
+		}
+		
+		return value;
+	}
+	
+	private static int countFMElements(NodeList nodeList, int flag) { 
+		int ret = 0;
+		for (int count = 0; count < nodeList.getLength(); count++) {  
+    		Node elemNode = nodeList.item(count);  
+    		if (elemNode.getNodeType() == Node.ELEMENT_NODE) {  
+	    		// get node name and value  	    		
+	    		switch (elemNode.getNodeName()) {
+	    		case("and"):
+	    		case("alt"):
+	    		case("or"):
+	    			if (flag==1) 
+	    				ret++;
+	    			break;
+	    		case("feature"):
+	    			if (flag==2)
+	    				ret++;
+	    			break;
+	    		case("rule"):
+	    			if (flag==3)
+	    				ret++;
+	    			break;
+	    		}
+	    		
+	    		
+	    		if (elemNode.hasChildNodes()) {  
+		    		//recursive call if the node has child nodes  
+		    		ret += countFMElements(elemNode.getChildNodes(),flag);  
+	    		}  
+	    	}  
+    	}
+		return ret;
+	}
+	
+	
 
 	public void addConstraint(Node constrNode) {
 
