@@ -37,49 +37,49 @@ public class MddInstanceTest {
 	@Test
 	public void featureCountTest1 () {
 		// gplTiny feat# = 4		
-		assertEquals(mddInst1.getFMInfo(2), 4);
+		assertEquals(mddInst1.getFMFeatures(), 4);
 	}
 	@Test
 	public void featureCountTest2 () {
 		// gplSmallTest feat# = 19	
-		assertEquals(mddInst2.getFMInfo(2), 19);
+		assertEquals(mddInst2.getFMFeatures(), 19);
 	}
 	@Test
 	public void featureCountTest3 () {
 		// golModel feat# = 50	
-		assertEquals(mddInst3.getFMInfo(2), 15);
+		assertEquals(mddInst3.getFMFeatures(), 15);
 	}
 
 	@Test
 	public void inlineConstraintCountTest1 () {
 		// gplTiny constr# = 3	
-		assertTrue(mddInst1.getFMInfo(1) == 3);
+		assertTrue(mddInst1.getFMConstraints() == 3);
 	}
 	@Test
 	public void inlineConstraintCountTest2 () {
 		// gplSmallTest 
-		assertTrue(mddInst2.getFMInfo(1) == 8);
+		assertTrue(mddInst2.getFMConstraints() == 8);
 	}
 	@Test
 	public void inlineConstraintCountTest3 () {
 		// golModel
-		assertTrue(mddInst3.getFMInfo(1) == 8);
+		assertTrue(mddInst3.getFMConstraints() == 8);
 	}
 	
 	@Test
 	public void crossTreeConstraintCountTest1 () {
 		// gplTiny 
-		assertTrue(mddInst1.getFMInfo(3) == 1);
+		assertTrue(mddInst1.getFMCTConstraints() == 1);
 	}
 	@Test
 	public void crossTreeConstraintCountTest2 () {
 		// gplSmallTest 
-		assertTrue(mddInst2.getFMInfo(3) == 3);
+		assertTrue(mddInst2.getFMCTConstraints() == 3);
 	}
 	@Test
 	public void crossTreeConstraintCountTest3 () {
 		// golModel
-		assertTrue(mddInst3.getFMInfo(3) == 8);
+		assertTrue(mddInst3.getFMCTConstraints() == 8);
 	}
 	
 	@Test
@@ -103,19 +103,19 @@ public class MddInstanceTest {
 		// Il numero di variabili deve corrispondere al numero di constraint inline
 		// gplTiny	
 		mddInst1.calculateMDD();
-		assertTrue(mddInst1.getMddVariableCount() == mddInst1.getFMInfo(1));
+		assertTrue(mddInst1.getMddVariableCount() == mddInst1.getFMConstraints());
 	}
 	@Test
 	public void variableCountTest2 () {
 		// gplSmallTest 
 		mddInst2.calculateMDD();
-		assertTrue(mddInst2.getMddVariableCount() == mddInst2.getFMInfo(1));
+		assertTrue(mddInst2.getMddVariableCount() == mddInst2.getFMConstraints());
 	}
 	@Test
 	public void variableCountTest3 () {
 		// golModel
 		mddInst3.calculateMDD();
-		assertTrue(mddInst3.getMddVariableCount() == mddInst3.getFMInfo(1));
+		assertTrue(mddInst3.getMddVariableCount() == mddInst3.getFMConstraints());
 	}
 
 	@Test

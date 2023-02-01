@@ -92,23 +92,27 @@ public class MddInstance
 		return vars.length;
 	}
 	
-	public int getFMInfo(int flag) {
-		int value = 0;
-		switch (flag) {
-		case (1): // Constraints
-			value = countFMElements(rootNode.getChildNodes(),flag) + 1;
-			break;
-		case(2): // Features
-			value = countFMElements(rootNode.getChildNodes(),flag);
-			break;
-		case(3): // Ctc
-			value = countFMElements(constraintsNode.getChildNodes(),flag);
-			break;
-		}
-		
-		return value;
+	public int getFMConstraints() {
+		return countFMElements(rootNode.getChildNodes(),1)+1;
 	}
 	
+	public int getFMFeatures() {
+		return countFMElements(rootNode.getChildNodes(),2);
+	}
+
+	public int getFMCTConstraints() {
+		return countFMElements(constraintsNode.getChildNodes(),3);
+	}
+	
+	/*
+	 * Funzione per il calcolo di informazioni riguardanti il feature model
+	 * 
+	 * @param nodeList: Lista di nodi contenente la struct o i constraints del feature model
+	 * @param flag: Può assumere 3 valori, in base all'informazione ricercata:
+	 *   1 per constraint inline
+	 *   2 per feature
+	 *   3 per constraint cross-tree
+	 */
 	private static int countFMElements(NodeList nodeList, int flag) { 
 		int ret = 0;
 		for (int count = 0; count < nodeList.getLength(); count++) {  

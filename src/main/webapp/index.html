@@ -38,18 +38,38 @@
 		document.getElementById('but5').setAttribute('disabled', true);
 		document.getElementById('but6').setAttribute('disabled', true);
 		document.getElementById('but7').setAttribute('disabled', true);
+		document.getElementById('progBar').style.display = 'none';
+		document.getElementById('progBar2').style.display = 'none';
 	}
 	
     // Get Requests
 
 	function calculateVC(){
 
+		document.getElementById('progBar2').style.display = 'block';
+		
 		var ajaxRequest = new XMLHttpRequest();
 		ajaxRequest.onreadystatechange = function(){
 			if(ajaxRequest.readyState == 4 && ajaxRequest.status == 200){
 				var response = JSON.parse(ajaxRequest.responseText);
-				alert('Numero di configurazioni valide: ' + response.value);
-			}			
+
+				if(response.value == "-1") {
+					alert("Il server ha avuto un errore nel calcolo delle configurazioni valide.");
+				} else if (response.value == "-2"){
+					alert("Il server non è riuscito a calcolare il numero di configurazioni valide in tempo.");
+				} else if (response.value == "-3"){
+					alert("Il server ha avuto un'interruzione inattesa.");
+				} else {
+					alert("Numero di configurazioni valide: " + response.value);
+				}
+				
+				if(response.value == "-1") {
+					alert("Il server non è riuscito a calcolare il numero di configurazioni valide in tempo.");
+				} else {
+					alert("Numero di configurazioni valide: " + response.value);
+				}
+				document.getElementById('progBar2').style.display = 'none';
+			}
 		}
 		ajaxRequest.open('GET', 'http://localhost:8080/MddFrontend/calcVc/');
 		ajaxRequest.send();
@@ -104,6 +124,35 @@
 		ajaxRequest.send();
 	}
 
+
+	function calculateMDD(){
+		document.getElementById('progBar').style.display = 'block';
+		
+		var ajaxRequest = new XMLHttpRequest();
+		ajaxRequest.onreadystatechange = function(){
+			if(ajaxRequest.readyState == 4 && ajaxRequest.status == 200){
+				var response = JSON.parse(ajaxRequest.responseText);
+				if(response.value == "1") {
+					alert("Il server ha calcolato l'MDD con successo");
+					document.getElementById('but1').setAttribute('disabled', true);
+					document.getElementById('but4').removeAttribute('disabled');
+					document.getElementById('but5').removeAttribute('disabled');
+					document.getElementById('but6').removeAttribute('disabled');
+					document.getElementById('but7').removeAttribute('disabled');
+				} else if (response.value == "-1"){
+					alert("Il server non è riuscito a calcolare l'MDD dal feature model ricevuto.");
+				} else if (response.value == "-2"){
+					alert("Il server non è riuscito a calcolare l'MDD nel tempo allocato.");
+				} else if (response.value == "-3"){
+					alert("Il server ha avuto un'interruzione inattesa.");
+				}
+				document.getElementById('progBar').style.display = 'none';
+			}
+		}
+		ajaxRequest.open('GET', 'http://localhost:8080/MddFrontend/calcMdd/');
+		ajaxRequest.send();
+	}
+	
 	
     // Post Requests
 	//document.getElementById('myfile').addEventListener('change', function() {
@@ -137,7 +186,7 @@
        
 	}
 	
-	function calculateMDD(){
+	function calculateMDD_old(){
 		var ajaxRequest = new XMLHttpRequest();
 		ajaxRequest.onreadystatechange = function(e){
 			if(ajaxRequest.readyState == 4){
@@ -222,6 +271,7 @@
 									document.getElementById('but1').removeAttribute('disabled');
 									document.getElementById('but2').removeAttribute('disabled');
 									document.getElementById('but3').removeAttribute('disabled');
+									document.getElementById('butSend').setAttribute('disabled', true);
 					            }
 					        };
 							ajaxRequest.open('POST', 'http://localhost:8080/MddFrontend/sendFM/',true);
@@ -244,6 +294,9 @@
 				        </div>
 				        <div class="card-action white-text center">
 							<a  class="waves-effect waves-light btn" onclick="calculateMDD()" id="but1">Calcola MDD</a> 
+							<div class="progress" id="progBar">
+							      <div class="indeterminate"></div>
+							</div>
 				        </div>
 				      </div>
 		        </div>
@@ -271,7 +324,10 @@
 			          <p> Informazioni ottenute dal MDD, principalmente il numero di configurazioni valide, e il numero di nodi e variabili del diagramma.</p>
 			        </div>
 			        <div class="card-action white-text center">
-						<a  class="waves-effect waves-light btn" onclick="calculateVC()" id="but4">Conta Configurazioni Valide</a> <br><br>
+						<a  class="waves-effect waves-light btn" onclick="calculateVC()" id="but4">Conta Configurazioni Valide</a> 
+							<div class="progress" id="progBar2">
+							      <div class="indeterminate"></div>
+							</div><br><br>
 						<a  class="waves-effect waves-light btn" onclick="getNodeCount()" id="but5">Conta Nodi MDD</a> <br><br>
 			        	<a  class="waves-effect waves-light btn" onclick="getVarCount()" id="but6">Conta variabili MDD</a>
 			        </div>

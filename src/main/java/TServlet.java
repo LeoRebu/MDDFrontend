@@ -9,7 +9,18 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringReader;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -56,27 +67,23 @@ public class TServlet extends HttpServlet {
 			HttpServletRequest request, 
 			HttpServletResponse response) throws ServletException, IOException {
 
-	
+	 
 		String requestUri = request.getRequestURI();
 		System.out.println(requestUri);
 		String json = "{}";
+		int ret; 
+		ExecutorService service = Executors.newSingleThreadExecutor();
+		
 		switch(requestUri) {
-		case "/MddFrontend/calcVc/":
-	    	int vc = instance.getValidConfigs();
-			json = "{\n";
-			json += "\"request\": " + JSONObject.quote("calculateValidConfigs") + ",\n";
-			json += "\"value\": " + JSONObject.quote(String.valueOf(vc)) + "\n";
-			json += "}";
-			break;
 		case "/MddFrontend/getFMFeatures/":
-	    	int featNum = instance.getFMInfo(2);
+	    	int featNum = instance.getFMFeatures();
 			json = "{\n";
 			json += "\"request\": " + JSONObject.quote("calculateNumberOfFeatures") + ",\n";
 			json += "\"value\": " + JSONObject.quote(String.valueOf(featNum)) + "\n";
 			json += "}";
 			break;
 		case "/MddFrontend/getFMConstr/":
-	    	int constrNum = instance.getFMInfo(1) + instance.getFMInfo(3);
+	    	int constrNum = instance.getFMConstraints() + instance.getFMCTConstraints();
 			json = "{\n";
 			json += "\"request\": " + JSONObject.quote("calculateNumberOfConstraints") + ",\n";
 			json += "\"value\": " + JSONObject.quote(String.valueOf(constrNum)) + "\n";
@@ -96,14 +103,25 @@ public class TServlet extends HttpServlet {
 			json += "\"value\": " + JSONObject.quote(String.valueOf(vcount)) + "\n";
 			json += "}";
 			break;
-		case "/MddFrontend/addFeat/":
-			String name = requestUri.substring("/MddFrontend/addFeat/".length());
-			if(name != null){
-				json = "{\n";
-				json += "\"request\": " + JSONObject.quote("addFeature") + ",\n";
-				json += "\"name\": " + JSONObject.quote(name) + "\n";
-				json += "}";
-			}
+			
+		case "/MddFrontend/calcVc/":
+			int vc = calculateVC();
+
+			json = "{\n";
+			json += "\"request\": " + JSONObject.quote("calcValidConfigs") + ",\n";
+			json += "\"value\": " + JSONObject.quote(String.valueOf(vc)) + "\n";
+			json += "}";
+			break;
+		case"/MddFrontend/calcMdd/":
+
+			int result = calculateMDD();
+			
+			json = "{\n";
+			json += "\"request\": " + JSONObject.quote("calcMdd") + ",\n";
+			json += "\"value\": " + JSONObject.quote(String.valueOf(result)) + "\n";
+			json += "}";
+			
+		    
 			break;
 		}
 		
@@ -126,7 +144,75 @@ public class TServlet extends HttpServlet {
 	    response.getWriter().write(json);
 	}
 	
-	
+    
+    private int calculateVC() {
+    	ExecutorService service = Executors.newSingleThreadExecutor();
+
+		try {
+		    Runnable r = new Runnable() {
+		        @Override
+		        public void run() {
+		        	instance.getValidConfigs();
+		        }
+		    };
+
+		    Future<?> f = service.submit(r);
+
+		    f.get(30, TimeUnit.SECONDS);     // attempt the task for 30 seconds
+
+	    	return instance.getValidConfigs();
+		    
+		}
+		catch (final InterruptedException e) {
+		    // The thread was interrupted during sleep, wait or join
+			return -3;
+		}
+		catch (final TimeoutException e) {
+			return -2;
+		}
+		catch (final ExecutionException e) {
+		    // An exception from within the Runnable task
+			return -1;
+		}
+		finally {
+		    service.shutdown();
+		}
+    }
+    
+
+    private int calculateMDD() {
+    	ExecutorService service = Executors.newSingleThreadExecutor();
+    	
+		try {
+		    Runnable r = new Runnable() {
+		        @Override
+		        public void run() {
+		        	instance.calculateMDD();
+		        }
+		    };
+
+		    Future<?> f = service.submit(r);
+
+		    f.get(30, TimeUnit.SECONDS);     // attempt the task for 30 seconds
+		    
+		    return 1;
+		}
+		catch (final InterruptedException e) {
+		    // The thread was interrupted during sleep, wait or join
+			return -3;
+		}
+		catch (final TimeoutException e) {
+			return -2;
+		}
+		catch (final ExecutionException e) {
+		    // An exception from within the Runnable task
+			return -1;
+		}
+		finally {
+		    service.shutdown();
+		}
+    }
+    
 	/**
 	 * Handler per le chiamate POST dai client
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
@@ -172,10 +258,6 @@ public class TServlet extends HttpServlet {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			}
-			
-			if (requestUri.equals("/MddFrontend/calcMdd/")) {
-		    	int ret = instance.calculateMDD();
 			}
 
 			if (requestUri.equals("/MddFrontend/newConstr/")) {
